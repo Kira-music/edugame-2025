@@ -4,14 +4,12 @@ import pygame
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QSpinBox, QPushButton, QVBoxLayout
 from components.timer.timer import GameTimer
 
-mwidth, mheight = 10, 10  # Размер карты в клетках
+mwidth, mheight = 10, 10  
+tsize = 100 
 
-tsize = 100  # Размер одной клетки в пикселях
 
-#  окно
 win_width = 700
 win_height = 500
-
 
 
 WHITE = (255, 255, 255)
@@ -23,10 +21,10 @@ GREEN = (0, 255, 0)
 win_width = 700
 win_height = 500
 
-back = pygame.image.load('grass.jpg')
+back = pygame.image.load('trava.jpg')
 back = pygame.transform.scale(back, (mwidth * tsize, mheight * tsize))
 
-brick = pygame.image.load('brick.png')
+brick = pygame.image.load('tree.jpg')
 brick = pygame.transform.scale(brick, (tsize, tsize))
 
 gamer = pygame.image.load('player.png')
@@ -45,7 +43,7 @@ class Player:
         self.x = x
         self.y = y
         self.color = color
-        self.score = 0  # очки за сбор предметов
+        self.score = 0 
 
     def move(self, dx, dy, game_map):
         x = self.x + dx
@@ -66,13 +64,11 @@ class Bot(Player):
 #создание карты
 def generate_map(buildings, pops):
     game_map = [[0] * mwidth for _ in range(mheight)]
-    # размещение построек
 
     for _ in range(buildings):
         x, y = random.randint(0, mwidth - 1), random.randint(0, mheight - 1)
         game_map[y][x] = 1
 
-    # размещение предметов
     item_positions = []
     for _ in range(pops):
         while True:
@@ -88,42 +84,48 @@ def start_game(buildings, pops, num_bots):
     screen = pygame.display.set_mode((mwidth * tsize, mheight * tsize))
     pygame.display.set_caption("Сбор предметов")
 
-    # создание рандом карты
+    
     game_map, item_positions = generate_map(buildings, pops)
 
-    # создание игрока
     player = Player(random.randint(0, mwidth - 1), random.randint(0, mheight - 1), BLUE)
 
-    # создание ботов
 
     bots = [Bot(random.randint(0, mwidth - 1), random.randint(0, mheight - 1), RED) for _ in range(num_bots)]
     pops = [Bot(random.randint(0, mwidth - 1), random.randint(0, mheight - 1), GREEN) for _ in range(pops)]
     clock = pygame.time.Clock()
 
-    timer = GameTimer(duration=120)
+    timer = GameTimer(duration=90)
     timer.init_timer()
 
-    goal = pops
+    pygame.mixer.init()
+    pygame.mixer.music.load('sound.mp3')
+    pygame.mixer.music.play()
+    
+    lose = pygame.mixer.Sound('lose.mp3')
+    win = pygame.mixer.Sound('win.mp3')
+
 
     running = True
     game_over = False
     game_win = False
-    font = pygame.font.SysFont('arial', 36)
+    font = pygame.font.SysFont('arial', 48)
     score =0
 
     while running:
         screen.blit(back, (0, 0))
         if game_over:
             game_over_text = font.render("Вы были съедены пауком! Вы проиграли!", True, RED)
-            screen.blit(game_over_text, (win_width // 3, win_height // 2))
+            lose.play()
+            screen.blit(game_over_text, (90, 400))
             pygame.display.flip()
             pygame.time.delay(2000) 
             running = False
             break
 
         if game_win:
-            win_text = font.render("Ура!Вы победили!", True, (0, 255, 0))
-            screen.blit(win_text, (win_width // 3, win_height // 2))
+            win_text = font.render("Ура!Вы победили!", True, (255, 255, 255))
+            win.play()
+            screen.blit(win_text, (275, 400))
             pygame.display.flip()
             pygame.time.delay(2000)
             running = False
@@ -143,11 +145,9 @@ def start_game(buildings, pops, num_bots):
                 elif event.key == pygame.K_d:
                     player.move(1, 0, game_map)
 
-        # движение ботов
         for bot in bots:
             bot.move_random(game_map)
 
-        # столкновение бота и игрока
         for bot in bots:
             if player.x == bot.x and player.y == bot.y:
                 game_over = True
@@ -156,9 +156,8 @@ def start_game(buildings, pops, num_bots):
         # счетчик
         score_surface = font.render(f"Score: {score}", True, (255, 255, 255))
         screen.blit(score_surface, (10, 10))
-        # pygame.display.flip()
 
-        # столкновение с конфетой
+
         for pop in pops:
             if player.x == pop.x and player.y == pop.y:
                 print('hello')
@@ -171,7 +170,6 @@ def start_game(buildings, pops, num_bots):
                     pygame.display.flip()
                 break
 
-        # проверка на сбор предметов
         for pos in item_positions[:]:
             if (player.x, player.y) == pos:
                 player.score += 1
@@ -191,10 +189,6 @@ def start_game(buildings, pops, num_bots):
                 rect = pygame.Rect(x * tsize, y * tsize, tsize, tsize)
                 if game_map[y][x] == 1:
                     screen.blit(brick, rect)
-                    
-
-                # elif game_map[y][x] == 2:
-                #     screen.blit(candy, rect)
 
         # Рисуем игрока и ботов
         screen.blit(gamer, (player.x * tsize, player.y * tsize))
@@ -204,24 +198,18 @@ def start_game(buildings, pops, num_bots):
         for pop in pops:
             screen.blit(candy, (pop.x * tsize, pop.y * tsize))
 
-        # ====== ВАЖНО: Логика таймера =======
-        # 1. Получаем, сколько времени осталось
         time_left = timer.get_time_left()
-        # 2. Выводим текст таймера на экран
         time_surface = font.render(f"Time: {time_left}", True, (255, 255, 255))
         screen.blit(time_surface, (10, 50))
 
-        # 3. Если время вышло, заканчиваем игру
         if timer.is_finished():
             game_over = True
             game_over_text = font.render("Ваше время закончилось! Вы проиграли!", True, RED)
-
 
         pygame.display.flip()
         clock.tick(5)
 
     pygame.quit()
-
 
 class SettingsWindow(QWidget):
     def __init__(self):
@@ -269,8 +257,7 @@ class WelcomeWindow(QWidget):
         super().__init__()
         self.setWindowTitle("Добро пожаловать")
         self.setGeometry(100, 100, 600, 300)
-        
-        # Текст приветствия
+
         welcome_text = (
             "Добро пожаловать. Волшебный маг превратил вас в лилипута, "
             "и вы попали в мир насекомых. Вам нужно собрать все конфеты, при этом не попасться паукам, "
@@ -279,22 +266,17 @@ class WelcomeWindow(QWidget):
         )
         self.label = QLabel(welcome_text)
         self.label.setWordWrap(True)
-        
-        # Кнопка "Продолжить"
+
         self.continue_button = QPushButton("Продолжить")
         self.continue_button.clicked.connect(self.on_continue)
-        
-        # Компоновка виджетов
+
         layout = QVBoxLayout()
         layout.addWidget(self.label)
         layout.addWidget(self.continue_button)
         self.setLayout(layout)
         
     def on_continue(self):
-        # Закрываем окно приветствия и открываем окно настроек
         self.close()
-        # Импортируем окно настроек; убедитесь, что путь корректен
-        #from components.ui.settings_window import SettingsWindow
         self.settings_window = SettingsWindow()
         self.settings_window.show()
 
