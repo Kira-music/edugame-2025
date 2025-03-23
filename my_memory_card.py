@@ -1,4 +1,3 @@
-import sys
 import random
 import pygame
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QSpinBox, QPushButton, QVBoxLayout
@@ -82,7 +81,7 @@ def generate_map(buildings, pops):
 def start_game(buildings, pops, num_bots):
     pygame.init()
     screen = pygame.display.set_mode((mwidth * tsize, mheight * tsize))
-    pygame.display.set_caption("Сбор предметов")
+    pygame.display.set_caption("Приключение")
 
     
     game_map, item_positions = generate_map(buildings, pops)
@@ -215,7 +214,7 @@ class SettingsWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Настройки карты")
-        self.setGeometry(100, 100, 300, 200)
+        self.setGeometry(700, 400, 700, 400)
 
         self.label_buildings = QLabel("Количество построек:")
         self.spin_buildings = QSpinBox()
@@ -224,7 +223,7 @@ class SettingsWindow(QWidget):
 
         self.label_pops = QLabel("Количество предметов:")
         self.spin_pops = QSpinBox()
-        self.spin_pops.setRange(1, 15)
+        self.spin_pops.setRange(1, 10)
         self.spin_pops.setValue(5)
 
         self.label_bots = QLabel("Количество ботов:")
@@ -256,14 +255,13 @@ class WelcomeWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Добро пожаловать")
-        self.setGeometry(100, 100, 600, 300)
+        self.setGeometry(600, 300, 600, 300)
 
         welcome_text = (
             "Добро пожаловать. Волшебный маг превратил вас в лилипута, "
             "и вы попали в мир насекомых. Вам нужно собрать все конфеты, при этом не попасться паукам, "
             "чтобы вернуть свой прежний облик. Быстрее нажимайте кнопку "
-            "продолжить и выбирайте критерии игры!"
-        )
+            "продолжить и выбирайте критерии игры!")
         self.label = QLabel(welcome_text)
         self.label.setWordWrap(True)
 
@@ -281,7 +279,7 @@ class WelcomeWindow(QWidget):
         self.settings_window.show()
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
+    app = QApplication([])
     window = WelcomeWindow()
     window.show()
-    sys.exit(app.exec_())
+    app.exec()
